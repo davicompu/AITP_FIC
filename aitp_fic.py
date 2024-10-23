@@ -31,94 +31,93 @@ for symbol in stocksymbols:
         
 print(df)
 
-# Analysis
-fig, ax = plt.subplots(figsize=(15, 8))
+# # Analysis
+# fig, ax = plt.subplots(figsize=(15, 8))
 
-for i in df.columns.values:
-    ax.plot(df[i], label=i)
+# for i in df.columns.values:
+#     ax.plot(df[i], label=i)
 
-ax.set_title("Portfolio Close Price History")
-ax.set_xlabel('Date', fontsize=18)
-ax.set_ylabel('Close Price)', fontsize=18)
-ax.legend(df.columns.values, loc='upper left')
+# ax.set_title("Portfolio Close Price History")
+# ax.set_xlabel('Date', fontsize=18)
+# ax.set_ylabel('Close Price)', fontsize=18)
+# ax.legend(df.columns.values, loc='upper left')
 
-# Correlation Matrix
+# # Correlation Matrix
 
-correlation_matrix = df.corr(method='pearson')
-print(correlation_matrix)
+# correlation_matrix = df.corr(method='pearson')
+# print(correlation_matrix)
 
-fig1 = plt.figure()
-sb.heatmap(correlation_matrix, 
-           xticklabels=correlation_matrix.columns, 
-           yticklabels=correlation_matrix.columns,
-           cmap='YlGnBu', 
-           annot=True, 
-           linewidth=0.5)
+# fig1 = plt.figure()
+# sb.heatmap(correlation_matrix, 
+#            xticklabels=correlation_matrix.columns, 
+#            yticklabels=correlation_matrix.columns,
+#            cmap='YlGnBu', ###this is just the color of the heatmap 
+#            annot=True, 
+#            linewidth=0.5)
 
-print('Correlation between Stocks in your portfolio')
+# print('Correlation between Stocks in your portfolio')
 
-# Risk & Return
-#Calculate daily simple returns
-daily_simple_return = df.pct_change(1)
-daily_simple_return.dropna(inplace=True)
+# # Risk & Return
+# #Calculate daily simple returns
+# daily_simple_return = df.pct_change(1)
+# daily_simple_return.dropna(inplace=True)
 
-# Print daily simple returns
-print(daily_simple_return)
-print('Daily simple returns')
+# # Print daily simple returns
+# print(daily_simple_return)
+# print('Daily simple returns')
 
-# Plot daily simple returns
-fig, ax = plt.subplots(figsize=(15, 8))
+# # Plot daily simple returns
+# fig, ax = plt.subplots(figsize=(15, 8))
 
-for i in daily_simple_return.columns.values:
-    ax.plot(daily_simple_return[i], lw=2, label=i)
+# for i in daily_simple_return.columns.values:
+#     ax.plot(daily_simple_return[i], lw=2, label=i)
 
-ax.legend(loc='upper right', fontsize=10)
-ax.set_title('Volatility in Daily Simple Returns')
-ax.set_xlabel('Date')
-ax.set_ylabel('Daily Simple Returns')
+# ax.legend(loc='upper right', fontsize=10)
+# ax.set_title('Volatility in Daily Simple Returns')
+# ax.set_xlabel('Date')
+# ax.set_ylabel('Daily Simple Returns')
 
-# Average Daily returns
-print('Average Daily returns(%) of stocks in your portfolio')
-Avg_daily = daily_simple_return.mean()
-print(Avg_daily*100)
+# # Average Daily returns
+# print('Average Daily returns(%) of stocks in your portfolio')
+# Avg_daily = daily_simple_return.mean()
+# print(Avg_daily*100)
 
-# Risk Box-Plot
-# Box plot for daily simple returns
-daily_simple_return.plot(kind="box", figsize=(20, 10), title="Risk Box Plot")
+# # Risk Box-Plot
+# # Box plot for daily simple returns
+# daily_simple_return.plot(kind="box", figsize=(20, 10), title="Risk Box Plot")
 
 
-# Print annualized standard deviation
-print('Annualized Standard Deviation (Volatility(%), 252 trading days) of individual stocks in your portfolio based on daily simple returns:')
-print(daily_simple_return.std() * np.sqrt(252) * 100)
+# # Print annualized standard deviation
+# print('Annualized Standard Deviation (Volatility(%), 252 trading days) of individual stocks in your portfolio based on daily simple returns:')
+# print(daily_simple_return.std() * np.sqrt(252) * 100)
 
-# Return Per Unit Of Risk
-print(Avg_daily / (daily_simple_return.std() * np.sqrt(252)) * 100)
+# # Return Per Unit Of Risk
+# print(Avg_daily / (daily_simple_return.std() * np.sqrt(252)) * 100)
 
-# Cumulative Returns
-daily_cumulative_simple_return = (daily_simple_return + 1).cumprod()
-print(daily_cumulative_simple_return)
+# # Cumulative Returns
+# daily_cumulative_simple_return = (daily_simple_return + 1).cumprod()
+# print(daily_cumulative_simple_return)
 
-# Visualize the daily cumulative simple return
-fig, ax = plt.subplots(figsize=(18, 8))
+# # Visualize the daily cumulative simple return
+# fig, ax = plt.subplots(figsize=(18, 8))
 
-for column in daily_cumulative_simple_return.columns:
-    ax.plot(daily_cumulative_simple_return[column], label=str(column))
+# for column in daily_cumulative_simple_return.columns:
+#     ax.plot(daily_cumulative_simple_return[column], label=str(column))
 
-ax.legend(loc='upper left', fontsize=12)
-ax.set_title('Daily Cumulative Simple Returns')
-ax.set_xlabel('Date')
-ax.set_ylabel('Cumulative Returns')
+# ax.legend(loc='upper left', fontsize=12)
+# ax.set_title('Daily Cumulative Simple Returns')
+# ax.set_xlabel('Date')
+# ax.set_ylabel('Cumulative Returns')
 
-# Visualize the daily cumulative simple return
-fig, ax = plt.subplots(figsize=(18, 8))
+# # Visualize the daily cumulative simple return
+# fig, ax = plt.subplots(figsize=(18, 8))
 
-for i in daily_cumulative_simple_return.columns.values:
-    ax.plot(daily_cumulative_simple_return[i], lw=2, label=i)
+# for i in daily_cumulative_simple_return.columns.values:
+#     ax.plot(daily_cumulative_simple_return[i], lw=2, label=i)
 
-ax.legend(loc='upper left', fontsize=10)
-ax.set_title('Daily Cumulative Simple Returns/Growth of Investment')
-ax.set_xlabel('Date')
-ax.set_ylabel('Growth of ₨ 1 Investment')
+# ax.legend(loc='upper left', fontsize=10)
+# ax.set_title('Daily Cumulative Simple Returns/Growth of Investment')
+# ax.set_xlabel('Date')
+# ax.set_ylabel('Growth of ₨ 1 Investment')
 
-plt.show()
-
+# plt.show()
