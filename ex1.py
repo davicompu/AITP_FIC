@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression #-m pip install scikit-learn
 
 filename = "jbhunt_data.csv"
 df = pd.read_csv(filename)
