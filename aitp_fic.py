@@ -1,111 +1,124 @@
+# Importing Libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-from sklearn.linear_model import LinearRegression
+import seaborn as sb
+from datetime import date
+import yfinance as yf  # Importing yfinance for American stock data
+plt.style.use('fivethirtyeight')  # Setting matplotlib style
 
-filename = "jbhunt_data.csv"
-df = pd.read_csv(filename)
-print(df.describe())
-print(df.groupby('datadate').mean())
+# Defining Parameters
+stocksymbols = ['AAPL', 'NVDA'] # Example symbols 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'NFLX', 'NVDA'
+startdate = date(2018, 10, 14)
+end_date = date.today()
+print(end_date)
+print(f"You have {len(stocksymbols)} assets in your portfolio")
 
-jbhunt_df = pd.read_csv(filename, index_col="datadate", infer_datetime_format=True)
-jbhunt_df.index = pd.to_datetime(jbhunt_df.index)
+# Fetching Data
+df = pd.DataFrame()
+for symbol in stocksymbols:
+    data = yf.download(symbol, start=startdate, end=end_date)[['Close']]
+    
+    if data.empty:  # Check if data is empty
+        print(f"No data found for {symbol}. Skipping.")
+        continue  # Skip to the next symbol if no data is found
+    
+    data.rename(columns={'Close': symbol}, inplace=True)  # Rename the 'Close' column to the symbol
+    if df.empty:  # If df is empty, initialize it
+        df = data
+    else:
+        df = df.join(data)
+        
+print(df)
 
-# I am using 25 Years of Sales Data to forecase future sales.
-# From this, I will forecast 12 years in the future from 2011 to 2022 and bounce that off of what we know Sales were during those 12 years.
+# Analysis
+fig, ax = plt.subplots(figsize=(15, 8))
 
-# I need a Returns column to show me the sales and exclude any zero or NaN values, if they exist.
-jbhunt_df['Return'] = (jbhunt_df["sales"])
-returns = jbhunt_df.replace(-np.inf, np.nan).dropna()
-returns = returns[returns['Return'] !=0]
+for i in df.columns.values:
+    ax.plot(df[i], label=i)
 
-# I need to train the basic regression model
-train = jbhunt_df[:'2010-12-31']
-test = jbhunt_df['2010-12-31':]
-x_train = train["Return"].to_frame()
-y_train = train["Return"]
-x_test = test["Return"].to_frame()
-y_test = test["Return"]
+ax.set_title("Portfolio Close Price History")
+ax.set_xlabel('Date', fontsize=18)
+ax.set_ylabel('Close Price)', fontsize=18)
+ax.legend(df.columns.values, loc='upper left')
 
-# At this point, I need to create a Linear Regression for this model fitted to the training data
-regression_model = LinearRegression()
-regression_model.fit(x_train, y_train)
-print("Coefficients:", regression_model.coef_)
-print("Intercept:", regression_model.intercept_)
-predictions = regression_model.predict(x_test)
-result = y_test.to_frame()
-result['Predicted Return'] = predictions
-plt.figure(figsize=(10, 13))
-plt.plot(result.index[:13], result['Return'][:13], label='Actual Sales', marker='o')
-for i, txt in enumerate(result['Return'][:13]):
-    plt.annotate(f'{txt:.2f}', (result.index[i], result['Return'][i]), textcoords="offset points", xytext=(0,10), ha='center')
-plt.xlabel('Date')
-plt.ylabel('Sales in Millions of Dollars')
-plt.title('Actual Sales')
-plt.legend(loc='upper left')
+# Correlation Matrix
+
+correlation_matrix = df.corr(method='pearson')
+print(correlation_matrix)
+
+fig1 = plt.figure()
+sb.heatmap(correlation_matrix, 
+           xticklabels=correlation_matrix.columns, 
+           yticklabels=correlation_matrix.columns,
+           cmap='YlGnBu', 
+           annot=True, 
+           linewidth=0.5)
+
+print('Correlation between Stocks in your portfolio')
+
+# Risk & Return
+#Calculate daily simple returns
+daily_simple_return = df.pct_change(1)
+daily_simple_return.dropna(inplace=True)
+
+# Print daily simple returns
+print(daily_simple_return)
+print('Daily simple returns')
+
+# Plot daily simple returns
+fig, ax = plt.subplots(figsize=(15, 8))
+
+for i in daily_simple_return.columns.values:
+    ax.plot(daily_simple_return[i], lw=2, label=i)
+
+ax.legend(loc='upper right', fontsize=10)
+ax.set_title('Volatility in Daily Simple Returns')
+ax.set_xlabel('Date')
+ax.set_ylabel('Daily Simple Returns')
+
+# Average Daily returns
+print('Average Daily returns(%) of stocks in your portfolio')
+Avg_daily = daily_simple_return.mean()
+print(Avg_daily*100)
+
+# Risk Box-Plot
+# Box plot for daily simple returns
+daily_simple_return.plot(kind="box", figsize=(20, 10), title="Risk Box Plot")
+
+
+# Print annualized standard deviation
+print('Annualized Standard Deviation (Volatility(%), 252 trading days) of individual stocks in your portfolio based on daily simple returns:')
+print(daily_simple_return.std() * np.sqrt(252) * 100)
+
+# Return Per Unit Of Risk
+print(Avg_daily / (daily_simple_return.std() * np.sqrt(252)) * 100)
+
+# Cumulative Returns
+daily_cumulative_simple_return = (daily_simple_return + 1).cumprod()
+print(daily_cumulative_simple_return)
+
+# Visualize the daily cumulative simple return
+fig, ax = plt.subplots(figsize=(18, 8))
+
+for column in daily_cumulative_simple_return.columns:
+    ax.plot(daily_cumulative_simple_return[column], label=str(column))
+
+ax.legend(loc='upper left', fontsize=12)
+ax.set_title('Daily Cumulative Simple Returns')
+ax.set_xlabel('Date')
+ax.set_ylabel('Cumulative Returns')
+
+# Visualize the daily cumulative simple return
+fig, ax = plt.subplots(figsize=(18, 8))
+
+for i in daily_cumulative_simple_return.columns.values:
+    ax.plot(daily_cumulative_simple_return[i], lw=2, label=i)
+
+ax.legend(loc='upper left', fontsize=10)
+ax.set_title('Daily Cumulative Simple Returns/Growth of Investment')
+ax.set_xlabel('Date')
+ax.set_ylabel('Growth of ₨ 1 Investment')
+
 plt.show()
 
-# In this second dataframe, I am using 12 years -- from 1998 to 2010 -- of JB Hunt Sales to build a test and training set.
-# Following is using a Lagged Return prediction to establish the forecast model's accuracy now that we know the actual Sales for the 12 year timeframe we are using.
-# I need a Returns column to show me the sales and exclude any zero or NaN values, if they exist.
-jbhunt_df['Return'] = (jbhunt_df["sales"])
-returns = jbhunt_df.replace(-np.inf, np.nan).dropna()
-returns = returns[returns['Return'] !=0]
-
-# I need lagged returns to serve me as a predictor for future returns on sales as I have learned in previous Finance and Firm Valuation courses.
-jbhunt_df['Lagged_Return'] = jbhunt_df["Return"].shift()
-jbhunt_df = jbhunt_df.dropna()
-
-# I need to train the basic regression model
-train = jbhunt_df[:'2010-12-31']
-test = jbhunt_df['2010-12-31':]
-x_train = train["Lagged_Return"].to_frame()
-y_train = train["Return"]
-x_test = test["Lagged_Return"].to_frame()
-y_test = test["Return"]
-
-# At this point, I need to create a Linear Regression for this model fitted to the training data
-regression_model = LinearRegression()
-regression_model.fit(x_train, y_train)
-print("Coefficients:", regression_model.coef_)
-print("Intercept:", regression_model.intercept_)
-predictions = regression_model.predict(x_test)
-result = y_test.to_frame()
-result['Predicted Return'] = predictions
-plt.figure(figsize=(10, 13))
-plt.plot(result.index[:13], result['Return'][:13], label='Actual Sales', marker='o')
-for i, txt in enumerate(result['Return'][:13]):
-    plt.annotate(f'{txt:.2f}', (result.index[i], result['Return'][i]), textcoords="offset points", xytext=(0,10), ha='center')
-plt.plot(result.index[:13], result['Predicted Return'][:13], label='Predicted Sales', marker='o')
-for i, txt in enumerate(result['Predicted Return'][:13]):
-    plt.annotate(f'{txt:.2f}', (result.index[i], result['Predicted Return'][i]), textcoords="offset points", xytext=(0,10), ha='left')
-plt.xlabel('Date')
-plt.ylabel('Sales in Millions of Dollars')
-plt.title('Actual vs Predicted Sales')
-plt.legend()
-plt.show()
-
-
-# Running an OLS model on this data set to extract the summary and run a different type of regression on the same data
-train = jbhunt_df[:'2010-12-31']
-test = jbhunt_df['2010-12-31':]
-x = train['Lagged_Return']
-y = train['Return']
-x_constant = sm.add_constant(x)
-model =sm.OLS(y,x_constant).fit()
-x_ols_test = sm.add_constant(test["Lagged_Return"])
-predictions = model.predict(x_ols_test)
-plt.figure(figsize=(10, 13))
-plt.plot(test.index[:13], test['Return'][:13], label='Actual Sales', marker='o')
-plt.plot(test.index[:13], predictions[:13], label='Predicted Sales', marker='o')
-for i, txt in enumerate(test['Return'][:13]):
-    plt.annotate(f'{txt:.2f}', (test.index[i], test['Return'][i]), textcoords="offset points", xytext=(0,10), ha='center')
-for i, txt in enumerate(predictions[:13]):
-    plt.annotate(f'{txt:.2f}', (test.index[i], predictions[i]), textcoords="offset points", xytext=(0,10), ha='left')
-plt.xlabel('Date')
-plt.ylabel('Sales in Millions of Dollars')
-plt.title('OLS Actual vs Predicted Sales')
-plt.legend()
-plt.show()
-print(model.summary())
